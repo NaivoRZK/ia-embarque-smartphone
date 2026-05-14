@@ -1,127 +1,265 @@
 # Tsaty — Assistant IA Local sur Mobile
 
-**Tsaty** est une application mobile React Native qui exécute un modèle de langage (LLM) **directement sur le téléphone**, sans nécessiter de connexion internet. Idéal pour une utilisation hors ligne totale.
+**Tsaty** est une application mobile React Native qui exécute un modèle de langage (LLM) **directement sur l'appareil**, sans aucune dépendance réseau. Idéal pour une utilisation hors ligne totale, confidentialité des données garantie.
 
-## 📱 Fonctionnalités
+---
 
-- 💬 **Chat IA local** avec Qwen2.5 0.5B (inférence 100% sur appareil via `llama.rn`)
-- 🎤 **Reconnaissance vocale** (speech-to-text) pour dicter les messages
-- 🔊 **Synthèse vocale** (text-to-speech) pour écouter les réponses
-- 🛑 **Bouton stop** pour interrompre la lecture à tout moment
-- ↺ **Réinitialisation** de la conversation
-- 🔒 **100% hors ligne** — modèle embarqué dans l'APK
+## ✨ Fonctionnalités
 
-## 🧱 Technologies Utilisées
+| Fonctionnalité | Description |
+|---------------|-------------|
+| 💬 **Chat IA local** | Inférence LLM 100% sur l'appareil via `llama.rn` (Qwen2.5 0.5B) |
+| 🎤 **Reconnaissance vocale** | Dictez vos messages par la voix |
+| 🔊 **Synthèse vocale** | Écoutez les réponses de l'assistant |
+| 🛑 **Contrôle de lecture** | Bouton stop (■) pour interrompre la synthèse vocale à tout moment |
+| ↺ **Réinitialisation** | Effacez la conversation d'un seul geste |
+| 🔒 **100% hors ligne** | Modèle embarqué, zéro requête réseau |
+| 📱 **Autonome** | Aucun serveur, aucun backend requis |
 
-| Technologie | Rôle |
-|------------|------|
-| [React Native](https://reactnative.dev) 0.85.3 | Framework mobile cross-platform |
-| [TypeScript](https://www.typescriptlang.org) | Langage typé |
-| [llama.rn](https://github.com/mybigday/llama.rn) | Inference LLM locale (llama.cpp bindings) |
-| [Qwen2.5 0.5B Q4_K_M](https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF) | Modèle de langage embarqué (468 MB) |
-| [NativeWind](https://www.nativewind.dev) v4 | Styling TailwindCSS pour React Native |
-| [react-native-speech-recognition-kit](https://github.com/nicolai86/react-native-speech-recognition-kit) | Reconnaissance vocale |
-| [react-native-tts](https://github.com/ak1394/react-native-tts) | Synthèse vocale |
-| [react-native-fs](https://github.com/itinance/react-native-fs) | Gestion du stockage local |
-| [react-native-reanimated](https://docs.swmansion.com/react-native-reanimated/) | Animations performantes |
+---
 
-## 📦 Releases disponibles
+## 🧱 Stack Technique
 
-Deux formats sont disponibles pour la distribution :
+### Technologies principales
 
-| Format | Taille | Usage |
-|--------|--------|-------|
-| **APK** (`.apk`) | ~607 MB | Installation directe sur Android |
-| **AAB** (`.aab`) | ~531 MB | Publication sur le Google Play Store |
+| Technologie | Version | Rôle |
+|-------------|---------|------|
+| [React Native](https://reactnative.dev) | 0.85.3 | Framework mobile cross-platform (Fabric) |
+| [TypeScript](https://www.typescriptlang.org) | ^5.8 | Langage typé |
+| [NativeWind](https://www.nativewind.dev) | 4.2 | Styling TailwindCSS |
+| [llama.rn](https://github.com/mybigday/llama.rn) | 0.12 | Bindings React Native pour llama.cpp |
+| [Qwen2.5 0.5B](https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF) | Q4_K_M | Modèle de langage embarqué (468 MB) |
 
-> Les deux intègrent le bundle JS et le modèle de langage Qwen2.5 0.5B.
+### Librairies support
+
+| Librairie | Rôle |
+|-----------|------|
+| `react-native-speech-recognition-kit` | Reconnaissance vocale (speech-to-text) |
+| `react-native-tts` | Synthèse vocale (text-to-speech) |
+| `react-native-fs` | Gestion des fichiers (stockage du modèle) |
+| `react-native-reanimated` | Animations fluides |
+| `react-native-safe-area-context` | Gestion des safe areas |
+| `react-native-worklets` | Threading natif pour performances |
+
+---
+
+## 🏗 Architecture & Flux
+
+### Architecture en couches
+
+```
+src/
+├── entities/              # Types et interfaces du domaine
+│   ├── Message.ts         # Interface du message (id, text, role, timestamp)
+│   └── ScreenState.ts     # États de l'écran (idle, downloading, loading, ready, error)
+│
+├── logique/               # Logique métier
+│   ├── config/
+│   │   └── constants.ts   # Configuration (modèle, LLM, TTS, voix)
+│   ├── services/          # Services métier (classes)
+│   │   ├── LlmService.ts  # Interface avec llama.rn (init, generate, cancel)
+│   │   ├── ModelService.ts # Gestion du cycle de vie du modèle (download/asset/init)
+│   │   ├── VoiceService.ts # Reconnaissance vocale (permissions, écoute)
+│   │   └── TtsService.ts  # Synthèse vocale (speak, stop, Promise-based)
+│   └── hooks/             # Hooks React (pont entre services et UI)
+│       ├── useChat.ts     # État du chat, envoi, génération, lecture TTS
+│       └── useVoice.ts    # État du micro, écoute, permissions
+│
+├── stockage/              # Accès aux données persistantes
+│   └── repositories/
+│       └── ModelRepository.ts  # Opérations fichier (download, copy, existence)
+│
+└── ui/                    # Interface utilisateur
+    ├── components/        # Composants réutilisables
+    │   ├── ChatInput.tsx  # Input + micro + stop/reset/send
+    │   ├── MessageBubble.tsx # Bulle de message (user/assistant)
+    │   ├── MessageList.tsx   # FlatList des messages
+    │   ├── Header.tsx        # Barre de titre
+    │   └── SetupView.tsx     # Écran de téléchargement/chargement/erreur
+    ├── screens/
+    │   └── ChatScreen.tsx # Écran principal (orchestrateur)
+    └── theme/
+```
+
+### Flux détaillés
+
+#### 1. Flux de démarrage (Model Loading)
+
+```
+App launch
+  │
+  ├─ ModelService.initialize()
+  │    │
+  │    ├─ ensureDir() ──────────────── Crée le dossier models/
+  │    │
+  │    ├─ modelExists() ?
+  │    │    ├─ OUI → loadModel() ────── initLlama() → ready
+  │    │    └─ NON →
+  │    │         ├─ assetExists() ?
+  │    │         │    ├─ OUI → copyFromAsset() → loadModel() → ready
+  │    │         │    └─ NON → downloadModel() → loadModel() → ready
+  │    │
+  │    └─ ScreenState: idle → downloading/loading → ready/error
+  │
+  └─ ChatScreen affiche :
+       ├─ [idle]          → SetupView (vide)
+       ├─ [downloading]  → DownloadView (progression)
+       ├─ [loading]      → LoadingView (progression)
+       ├─ [ready]        → Chat UI (messages + input)
+       └─ [error]        → ErrorView (message + bouton réessayer)
+```
+
+#### 2. Flux d'envoi de message (Chat)
+
+```
+Utilisateur tape + ↑ (ou dicte)
+  │
+  ├─ handleSend() / handleVoiceResult()
+  │    │
+  │    ├─ doSend(text)
+  │    │    │
+  │    │    ├─ 1. Ajoute le message user à la liste
+  │    │    ├─ 2. Crée un message assistant vide
+  │    │    ├─ 3. lockedRef = true, setIsGenerating(true)
+  │    │    │
+  │    │    ├─ 4. llm.generate(history, onToken)
+  │    │    │    │
+  │    │    │    ├─ llama.rn génère token par token
+  │    │    │    ├─ onToken(partial) → met à jour le message assistant
+  │    │    │    └─ UI: spinner ██ dans le bouton d'envoi
+  │    │    │
+  │    │    ├─ 5. Génération terminée → fullResponse
+  │    │    │    ├─ setIsGenerating(false)
+  │    │    │    └─ setIsSpeaking(true)
+  │    │    │
+  │    │    ├─ 6. tts.speak(fullResponse)
+  │    │    │    ├─ Attend la fin de la synthèse (Promise)
+  │    │    │    └─ UI: bouton stop ■ (rouge) dans l'input
+  │    │    │
+  │    │    └─ 7. TTS terminé → setIsSpeaking(false), lockedRef = false
+  │    │         UI: retour au bouton envoi ↑
+  │    │
+  │    └─ En cas d'erreur → affiche "Erreur: ..." dans le message assistant
+  │
+  └─ États UI :
+       [Écriture] ██ spinner  →  [Lecture] ■ stop  →  [Repos] ↑ envoi
+```
+
+#### 3. Flux vocal (Voice)
+
+```
+Appui sur 🎤
+  │
+  ├─ handleMicPress()
+  │    │
+  │    ├─ Si locked (génération en cours) ?
+  │    │    └─ OUI → cancelGeneration() + stop TTS + arrête écoute
+  │    │
+  │    ├─ Si déjà en écoute ?
+  │    │    └─ OUI → stopListening()
+  │    │
+  │    └─ Sinon →
+  │         ├─ requestPermission() → RECORD_AUDIO
+  │         ├─ startListening()
+  │         └─ UI: 🎤 → icône d'onde sonore
+  │
+  └─ Résultat vocal reçu (onResults)
+       └─ doSend(text) → envoie directement le texte (sans passer par l'input)
+```
+
+#### 4. Flux d'annulation (Stop)
+
+```
+Appui sur ■ (stop) ou 🎤 (pendant génération)
+  │
+  ├─ cancelGeneration()
+  │    │
+  │    ├─ llm.cancel()     → _cancelled = true (callback ignore les tokens)
+  │    ├─ tts.stop()       → stop immédiat de la synthèse
+  │    ├─ setIsGenerating(false)
+  │    ├─ setIsSpeaking(false)
+  │    └─ lockedRef = false → UI débloquée immédiatement
+  │
+  └─ Résultat : utilisateur peut re-écrire, ré-enregistrer ou réinitialiser
+```
+
+---
+
+## 📦 Builds & Distribution
+
+### Formats disponibles
+
+| Format | Taille | Usage | Commande |
+|--------|--------|-------|----------|
+| **APK** (`.apk`) | ~607 MB | Installation directe sur Android | `./gradlew assembleRelease` |
+| **AAB** (`.aab`) | ~531 MB | Publication Google Play Store | `./gradlew bundleRelease` |
+
+> Les deux intègrent le bundle JS et le modèle Qwen2.5 0.5B (468 MB).
 
 ### Téléchargement
 
-🔗 [Télécharger la dernière release](https://github.com/NaivoRZK/ia-embarque-smartphone/releases/latest)
+🔗 [Voir les releases sur GitHub](https://github.com/NaivoRZK/ia-embarque-smartphone/releases/latest)
 
-> **Note :** Si le lien est vide, créez une release depuis GitHub ou build vous-même (voir section Build).
+> Créez une release depuis GitHub ou build manuellement (voir ci-dessous).
 
-### Installation
+### Installation de l'APK
 
-**APK :**
-1. Téléchargez le fichier `.apk` sur votre téléphone Android
-2. Ouvrez le fichier depuis le gestionnaire de fichiers
-3. Autorisez l'installation depuis des sources inconnues si demandé
+1. Téléchargez le fichier `.apk` sur votre appareil Android
+2. Ouvrez-le depuis le gestionnaire de fichiers
+3. Autorisez l'installation depuis des sources inconnues si nécessaire
 4. Lancez **Tsaty**
 
-**AAB :**
-- À utiliser exclusivement pour publication sur le Google Play Store
-- Ne peut pas être installé directement sur un appareil
+---
 
-## 🚀 Installer le projet sur PC (pour développeurs)
+## 🚀 Développement
 
 ### Prérequis
 
-- Node.js >= 22.11.0
-- React Native CLI (voir [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment))
-- Android Studio (pour le build Android)
-- Un appareil Android ou un émulateur
+- Node.js ≥ 22.11.0
+- [React Native CLI](https://reactnative.dev/docs/set-up-your-environment)
+- Android Studio (NDK, SDK)
+- Appareil Android avec débogage USB activé (ou émulateur)
 
-### Étapes
+### Installation
 
 ```bash
-# 1. Cloner le dépôt
+# Cloner
 git clone https://github.com/NaivoRZK/ia-embarque-smartphone.git
 cd ia-embarque-smartphone
 
-# 2. Installer les dépendances
+# Dépendances
 npm install
 
-# 3. (Optionnel) Embarquer le modèle dans les assets
-# Télécharger Qwen2.5 0.5B Q4_K_M depuis Hugging Face :
-# https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf
-# Puis le placer dans :
+# (Optionnel) Embarquer le modèle dans les assets pour build offline
 mkdir -p android/app/src/main/assets/models
+# Télécharger : https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf
 cp /chemin/vers/qwen2.5-0.5b-instruct-q4_k_m.gguf android/app/src/main/assets/models/
+```
 
-# 4. Lancer en mode développement
-npm start        # Démarre Metro bundler
-npm run android  # Build et installe sur l'appareil connecté
-
-# 5. Build release
+### Lancement (dev)
 
 ```bash
-# Build APK (installation directe)
-cd android && ./gradlew assembleRelease
+# Terminal 1 : Metro bundler
+npm start
 
-# Build AAB (Google Play Store)
-cd android && ./gradlew bundleRelease
+# Terminal 2 : Build & install sur l'appareil
+npm run android
+```
+
+### Build release
+
+```bash
+cd android
+
+# APK (installation directe)
+./gradlew assembleRelease
+
+# AAB (Google Play)
+./gradlew bundleRelease
 ```
 
 Fichiers générés :
 ```
-APK : android/app/build/outputs/apk/release/app-release.apk
-AAB : android/app/build/outputs/bundle/release/app-release.aab
+📦 android/app/build/outputs/apk/release/app-release.apk
+📦 android/app/build/outputs/bundle/release/app-release.aab
 ```
-
-L'APK généré se trouve dans :
-```
-android/app/build/outputs/apk/release/app-release.apk
-```
-
-### Architecture du Projet
-
-```
-src/
-├── entities/          # Types et interfaces (Message, ScreenState)
-├── logique/
-│   ├── config/        # Constantes de configuration
-│   ├── hooks/         # Hooks React (useChat, useVoice)
-│   └── services/      # Services métier (Llm, Voice, TTS, Model)
-├── stockage/
-│   └── repositories/  # Accès au stockage (ModelRepository)
-└── ui/
-    ├── components/    # Composants réutilisables
-    ├── screens/       # Écrans de l'application
-    └── theme/         # Thème et styles
-```
-
-## 📄 Licence
-
-Projet privé — Tous droits réservés.
