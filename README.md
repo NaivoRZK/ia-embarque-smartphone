@@ -1,97 +1,127 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# Tsaty — Assistant IA Local sur Mobile
 
-# Getting Started
+**Tsaty** est une application mobile React Native qui exécute un modèle de langage (LLM) **directement sur le téléphone**, sans nécessiter de connexion internet. Idéal pour une utilisation hors ligne totale.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+## 📱 Fonctionnalités
 
-## Step 1: Start Metro
+- 💬 **Chat IA local** avec Qwen2.5 0.5B (inférence 100% sur appareil via `llama.rn`)
+- 🎤 **Reconnaissance vocale** (speech-to-text) pour dicter les messages
+- 🔊 **Synthèse vocale** (text-to-speech) pour écouter les réponses
+- 🛑 **Bouton stop** pour interrompre la lecture à tout moment
+- ↺ **Réinitialisation** de la conversation
+- 🔒 **100% hors ligne** — modèle embarqué dans l'APK
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+## 🧱 Technologies Utilisées
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+| Technologie | Rôle |
+|------------|------|
+| [React Native](https://reactnative.dev) 0.85.3 | Framework mobile cross-platform |
+| [TypeScript](https://www.typescriptlang.org) | Langage typé |
+| [llama.rn](https://github.com/mybigday/llama.rn) | Inference LLM locale (llama.cpp bindings) |
+| [Qwen2.5 0.5B Q4_K_M](https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF) | Modèle de langage embarqué (468 MB) |
+| [NativeWind](https://www.nativewind.dev) v4 | Styling TailwindCSS pour React Native |
+| [react-native-speech-recognition-kit](https://github.com/nicolai86/react-native-speech-recognition-kit) | Reconnaissance vocale |
+| [react-native-tts](https://github.com/ak1394/react-native-tts) | Synthèse vocale |
+| [react-native-fs](https://github.com/itinance/react-native-fs) | Gestion du stockage local |
+| [react-native-reanimated](https://docs.swmansion.com/react-native-reanimated/) | Animations performantes |
 
-```sh
-# Using npm
-npm start
+## 📦 Releases disponibles
 
-# OR using Yarn
-yarn start
+Deux formats sont disponibles pour la distribution :
+
+| Format | Taille | Usage |
+|--------|--------|-------|
+| **APK** (`.apk`) | ~607 MB | Installation directe sur Android |
+| **AAB** (`.aab`) | ~531 MB | Publication sur le Google Play Store |
+
+> Les deux intègrent le bundle JS et le modèle de langage Qwen2.5 0.5B.
+
+### Téléchargement
+
+🔗 [Télécharger la dernière release](https://github.com/NaivoRZK/ia-embarque-smartphone/releases/latest)
+
+> **Note :** Si le lien est vide, créez une release depuis GitHub ou build vous-même (voir section Build).
+
+### Installation
+
+**APK :**
+1. Téléchargez le fichier `.apk` sur votre téléphone Android
+2. Ouvrez le fichier depuis le gestionnaire de fichiers
+3. Autorisez l'installation depuis des sources inconnues si demandé
+4. Lancez **Tsaty**
+
+**AAB :**
+- À utiliser exclusivement pour publication sur le Google Play Store
+- Ne peut pas être installé directement sur un appareil
+
+## 🚀 Installer le projet sur PC (pour développeurs)
+
+### Prérequis
+
+- Node.js >= 22.11.0
+- React Native CLI (voir [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment))
+- Android Studio (pour le build Android)
+- Un appareil Android ou un émulateur
+
+### Étapes
+
+```bash
+# 1. Cloner le dépôt
+git clone https://github.com/NaivoRZK/ia-embarque-smartphone.git
+cd ia-embarque-smartphone
+
+# 2. Installer les dépendances
+npm install
+
+# 3. (Optionnel) Embarquer le modèle dans les assets
+# Télécharger Qwen2.5 0.5B Q4_K_M depuis Hugging Face :
+# https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf
+# Puis le placer dans :
+mkdir -p android/app/src/main/assets/models
+cp /chemin/vers/qwen2.5-0.5b-instruct-q4_k_m.gguf android/app/src/main/assets/models/
+
+# 4. Lancer en mode développement
+npm start        # Démarre Metro bundler
+npm run android  # Build et installe sur l'appareil connecté
+
+# 5. Build release
+
+```bash
+# Build APK (installation directe)
+cd android && ./gradlew assembleRelease
+
+# Build AAB (Google Play Store)
+cd android && ./gradlew bundleRelease
 ```
 
-## Step 2: Build and run your app
-
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
-
-### Android
-
-```sh
-# Using npm
-npm run android
-
-# OR using Yarn
-yarn android
+Fichiers générés :
+```
+APK : android/app/build/outputs/apk/release/app-release.apk
+AAB : android/app/build/outputs/bundle/release/app-release.aab
 ```
 
-### iOS
-
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
-```sh
-bundle install
+L'APK généré se trouve dans :
+```
+android/app/build/outputs/apk/release/app-release.apk
 ```
 
-Then, and every time you update your native dependencies, run:
+### Architecture du Projet
 
-```sh
-bundle exec pod install
+```
+src/
+├── entities/          # Types et interfaces (Message, ScreenState)
+├── logique/
+│   ├── config/        # Constantes de configuration
+│   ├── hooks/         # Hooks React (useChat, useVoice)
+│   └── services/      # Services métier (Llm, Voice, TTS, Model)
+├── stockage/
+│   └── repositories/  # Accès au stockage (ModelRepository)
+└── ui/
+    ├── components/    # Composants réutilisables
+    ├── screens/       # Écrans de l'application
+    └── theme/         # Thème et styles
 ```
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+## 📄 Licence
 
-```sh
-# Using npm
-npm run ios
-
-# OR using Yarn
-yarn ios
-```
-
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
-
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
-
-## Step 3: Modify your app
-
-Now that you have successfully run the app, let's make changes!
-
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
-
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
-
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+Projet privé — Tous droits réservés.
