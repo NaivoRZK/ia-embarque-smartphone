@@ -16,17 +16,17 @@ React Native 0.85.3 • TypeScript • NativeWind • llama.rn • Qwen2.5 0.5B
 
 ## Fichiers de build
 
-Les fichiers prets a l'emploi se trouvent dans le dossier `build/` a la racine du projet.
+[Telecharger la derniere release](https://github.com/NaivoRZK/ia-embarque-smartphone/releases/latest)
 
 | Fichier | Description |
 |---------|-------------|
-| `build/tsaty-release.apk` | Installation directe sur Android (~607 MB) |
-| `build/tsaty-release.aab` | Publication Google Play Store (~531 MB) |
+| `tsaty-release.apk` (~607 MB) | Installation directe sur Android |
+| `tsaty-release.aab` (~531 MB) | Publication Google Play Store |
 
 ### Installation
 
-1. Copiez `build/tsaty-release.apk` sur votre appareil Android
-2. Ouvrez le fichier depuis le gestionnaire de fichiers
+1. Telechargez `tsaty-release.apk` depuis la release
+2. Ouvrez le fichier sur votre appareil Android
 3. Autorisez l'installation depuis des sources inconnues si necessaire
 4. Lancez **Tsaty**
 
