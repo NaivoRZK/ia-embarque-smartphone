@@ -5,9 +5,10 @@ import type { Message } from '../../entities/Message';
 
 interface MessageListProps {
   messages: Message[];
+  isGenerating: boolean;
 }
 
-export function MessageList({ messages }: MessageListProps) {
+export function MessageList({ messages, isGenerating }: MessageListProps) {
   const flatListRef = useRef<FlatList>(null);
 
   const handleContentSizeChange = useCallback(() => {
@@ -18,7 +19,7 @@ export function MessageList({ messages }: MessageListProps) {
     <FlatList
       ref={flatListRef}
       data={messages}
-      renderItem={({ item }) => <MessageBubble message={item} />}
+      renderItem={({ item }) => <MessageBubble message={item} isGenerating={isGenerating} />}
       keyExtractor={(item) => item.id}
       extraData={messages}
       contentContainerClassName="px-3 py-2"

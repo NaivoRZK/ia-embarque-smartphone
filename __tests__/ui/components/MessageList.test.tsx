@@ -9,21 +9,25 @@ describe('MessageList', () => {
   ];
 
   it('renders all messages', () => {
-    const { getByText } = render(<MessageList messages={messages} />);
+    const { getByText } = render(
+      <MessageList messages={messages} isGenerating={false} />,
+    );
 
     expect(getByText('Bonjour')).toBeTruthy();
     expect(getByText('Salut')).toBeTruthy();
   });
 
   it('renders empty list', () => {
-    const { toJSON } = render(<MessageList messages={[]} />);
+    const { toJSON } = render(
+      <MessageList messages={[]} isGenerating={false} />,
+    );
 
     expect(toJSON()).toBeTruthy();
   });
 
   it('renders single message', () => {
     const { getByText } = render(
-      <MessageList messages={[messages[0]]} />,
+      <MessageList messages={[messages[0]]} isGenerating={false} />,
     );
 
     expect(getByText('Bonjour')).toBeTruthy();

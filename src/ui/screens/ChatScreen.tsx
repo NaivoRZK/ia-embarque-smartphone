@@ -98,7 +98,7 @@ export default function ChatScreen() {
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
       <Header title="Tsaty" subtitle="Modèle local actif" />
-      <MessageList messages={messages} />
+      <MessageList messages={messages} isGenerating={isGenerating} />
       <ChatInput
         inputText={inputText}
         onInputChange={setInputText}

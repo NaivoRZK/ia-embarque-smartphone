@@ -26,4 +26,4 @@ export const TTS_RATE = 0.5;
 export const VOICE_LOCALE = 'fr-FR';
 
 export const GREETING_MESSAGE =
-  "Bonjour ! Je suis Tsaty, votre assistant IA local. Je peux vous aider en traduction, encyclopédie et bien plus. Posez-moi toutes vos questions ! \uD83D\uDC42";
+  "Bonjour ! Je suis Tsaty, votre assistant IA local. Je peux vous aider en traduction, encyclopédie et bien plus. Posez-moi toutes vos questions !";
