@@ -1,5 +1,4 @@
-import Voice from '@react-native-community/voice';
-import { Platform, PermissionsAndroid } from 'react-native';
+import { Platform, PermissionsAndroid, TurboModuleRegistry, NativeModules, NativeEventEmitter } from 'react-native';
 import { VOICE_LOCALE } from '../config/constants';
 
 export interface VoiceCallbacks {
@@ -10,30 +9,58 @@ export interface VoiceCallbacks {
   onError: (error: string) => void;
 }
 
+const EVENTS = {
+  START: 'onSpeechStart',
+  END: 'onSpeechEnd',
+  RESULTS: 'onSpeechResults',
+  PARTIAL_RESULTS: 'onSpeechPartialResults',
+  ERROR: 'onSpeechError',
+} as const;
+
+function getNativeModule(): any {
+  try {
+    const tm = TurboModuleRegistry?.get('SpeechRecognition');
+    if (tm) return tm;
+  } catch {}
+  return (NativeModules as any).SpeechRecognition;
+}
+
+const NativeSpeech = getNativeModule();
+
 export class VoiceService {
   private callbacks: VoiceCallbacks | null = null;
+  private emitter: NativeEventEmitter | null = null;
+  private subscriptions: Array<{ remove: () => void }> = [];
+
+  readonly isAvailable = !!NativeSpeech;
 
   setup(callbacks: VoiceCallbacks): void {
+    this.cleanup();
     this.callbacks = callbacks;
+    if (!NativeSpeech) return;
 
-    Voice.onSpeechStart = () => this.callbacks?.onStart();
-    Voice.onSpeechEnd = () => this.callbacks?.onEnd();
+    this.emitter = new NativeEventEmitter(NativeSpeech);
 
-    Voice.onSpeechResults = (e) => {
-      if (e.value?.[0]) {
-        this.callbacks?.onResults(e.value[0]);
-      }
+    const addSub = (event: string, handler: (...args: any[]) => void) => {
+      const sub = this.emitter!.addListener(event, handler);
+      this.subscriptions.push(sub);
     };
 
-    Voice.onSpeechPartialResults = (e) => {
-      if (e.value?.[0]) {
-        this.callbacks?.onPartialResults(e.value[0]);
-      }
-    };
+    addSub(EVENTS.START, () => this.callbacks?.onStart());
+    addSub(EVENTS.END, () => this.callbacks?.onEnd());
+    addSub(EVENTS.RESULTS, (event: any) => {
+      if (event?.value) this.callbacks?.onResults(event.value);
+    });
+    addSub(EVENTS.PARTIAL_RESULTS, (event: any) => {
+      if (event?.value) this.callbacks?.onPartialResults(event.value);
+    });
+    addSub(EVENTS.ERROR, (event: any) => {
+      this.callbacks?.onError(event?.message || 'Erreur de reconnaissance');
+    });
 
-    Voice.onSpeechError = (e) => {
-      this.callbacks?.onError(e.error?.message || 'Erreur de reconnaissance');
-    };
+    if (NativeSpeech.setRecognitionLanguage) {
+      NativeSpeech.setRecognitionLanguage(VOICE_LOCALE).catch(() => {});
+    }
   }
 
   async requestPermission(): Promise<boolean> {
@@ -51,14 +78,29 @@ export class VoiceService {
   }
 
   async start(): Promise<void> {
-    await Voice.start(VOICE_LOCALE, { REQUEST_PERMISSIONS_AUTO: false });
+    if (!NativeSpeech) {
+      throw new Error('Reconnaissance vocale non disponible');
+    }
+    await NativeSpeech.startListening();
   }
 
   async stop(): Promise<void> {
-    await Voice.stop();
+    if (!NativeSpeech) return;
+    await NativeSpeech.stopListening();
   }
 
   async destroy(): Promise<void> {
-    await Voice.destroy().then(Voice.removeAllListeners);
+    this.cleanup();
+    if (NativeSpeech?.destroy) {
+      try {
+        await NativeSpeech.destroy();
+      } catch {}
+    }
+  }
+
+  private cleanup(): void {
+    this.subscriptions.forEach((s) => s.remove());
+    this.subscriptions = [];
+    this.callbacks = null;
   }
 }

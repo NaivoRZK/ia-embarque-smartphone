@@ -13,6 +13,7 @@ describe('useVoice', () => {
     voice = new VoiceService() as jest.Mocked<VoiceService>;
     onResult = jest.fn();
     voice.requestPermission.mockResolvedValue(true);
+    Object.defineProperty(voice, 'isAvailable', { get: () => true });
   });
 
   it('starts not listening', () => {
@@ -20,6 +21,18 @@ describe('useVoice', () => {
 
     expect(result.current.isListening).toBe(false);
     expect(result.current.voiceError).toBe('');
+  });
+
+  it('returns voiceAvailable true when service is available', () => {
+    const { result } = renderHook(() => useVoice(voice, onResult, false));
+
+    expect(result.current.voiceAvailable).toBe(true);
+  });
+
+  it('returns voiceAvailable false when voice service is null', () => {
+    const { result } = renderHook(() => useVoice(null, onResult, false));
+
+    expect(result.current.voiceAvailable).toBe(false);
   });
 
   it('starts listening on toggleMic', async () => {

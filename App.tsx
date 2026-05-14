@@ -1,4 +1,4 @@
-import '../global.css';
+import './global.css';
 import { StatusBar, useColorScheme } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import ChatScreen from './src/ui/screens/ChatScreen';

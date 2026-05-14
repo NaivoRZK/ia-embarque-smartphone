@@ -10,6 +10,7 @@ describe('ChatInput', () => {
     isGenerating: false,
     isListening: false,
     voiceError: '',
+    voiceAvailable: true,
     onMicPress: jest.fn(),
   };
 

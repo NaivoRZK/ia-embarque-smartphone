@@ -4,9 +4,14 @@ import type { Message } from '../../entities/Message';
 
 export class LlmService {
   private context: LlamaContext | null = null;
+  private _cancelled = false;
 
   get isReady(): boolean {
     return this.context !== null;
+  }
+
+  cancel(): void {
+    this._cancelled = true;
   }
 
   async init(modelPath: string, onProgress: (pct: number) => void): Promise<void> {
@@ -28,6 +33,7 @@ export class LlmService {
       throw new Error('Modèle non initialisé');
     }
 
+    this._cancelled = false;
     const history = messages.map((m) => ({
       role: m.role,
       content: m.text,
@@ -36,20 +42,27 @@ export class LlmService {
     let fullResponse = '';
     let partial = '';
 
-    await this.context.completion(
-      {
-        messages: history,
-        ...LLM_COMPLETION_CONFIG,
-      },
-      (token) => {
-        if (token.token) {
-          partial += token.token;
-          fullResponse += token.token;
-          onToken(partial);
-        }
-      },
-    );
+    try {
+      await this.context.completion(
+        {
+          messages: history,
+          ...LLM_COMPLETION_CONFIG,
+        },
+        (token) => {
+          if (this._cancelled) return;
+          if (token.token) {
+            partial += token.token;
+            fullResponse += token.token;
+            onToken(partial);
+          }
+        },
+      );
+    } catch {
+      if (this._cancelled) return '';
+      throw new Error('Erreur de génération');
+    }
 
+    if (this._cancelled) return '';
     return fullResponse;
   }
 

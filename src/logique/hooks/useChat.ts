@@ -14,10 +14,13 @@ export function useChat(llm: LlmService | null, tts: TtsService | null) {
     },
   ]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const messagesRef = useRef<Message[]>([]);
-  const isGeneratingRef = useRef(false);
+  const lockedRef = useRef(false);
 
   messagesRef.current = messages;
+
+  const isLocked = isGenerating || isSpeaking;
 
   const resetMessages = useCallback(() => {
     setMessages([
@@ -33,7 +36,7 @@ export function useChat(llm: LlmService | null, tts: TtsService | null) {
   const doSend = useCallback(
     async (text: string) => {
       const trimmed = text.trim();
-      if (!trimmed || isGeneratingRef.current || !llm) return;
+      if (!trimmed || lockedRef.current || !llm) return;
 
       const userMessage: Message = {
         id: Date.now().toString(),
@@ -51,7 +54,7 @@ export function useChat(llm: LlmService | null, tts: TtsService | null) {
 
       setMessages((prev) => [...prev, userMessage, assistantMessage]);
       setIsGenerating(true);
-      isGeneratingRef.current = true;
+      lockedRef.current = true;
 
       try {
         const history = [...messagesRef.current, userMessage];
@@ -66,10 +69,16 @@ export function useChat(llm: LlmService | null, tts: TtsService | null) {
           });
         });
 
+        setIsGenerating(false);
+
         if (fullResponse.trim() && tts) {
-          tts.speak(fullResponse);
+          setIsSpeaking(true);
+          await tts.speak(fullResponse);
+          setIsSpeaking(false);
         }
       } catch (err: any) {
+        setIsGenerating(false);
+        setIsSpeaking(false);
         setMessages((prev) => {
           const updated = [...prev];
           const last = updated[updated.length - 1];
@@ -83,11 +92,20 @@ export function useChat(llm: LlmService | null, tts: TtsService | null) {
         });
       } finally {
         setIsGenerating(false);
-        isGeneratingRef.current = false;
+        setIsSpeaking(false);
+        lockedRef.current = false;
       }
     },
     [llm, tts],
   );
 
-  return { messages, isGenerating, doSend, resetMessages };
+  const cancelGeneration = useCallback(() => {
+    if (llm) llm.cancel();
+    if (tts) tts.stop();
+    setIsGenerating(false);
+    setIsSpeaking(false);
+    lockedRef.current = false;
+  }, [llm, tts]);
+
+  return { messages, isGenerating, isSpeaking, isLocked, doSend, resetMessages, cancelGeneration };
 }

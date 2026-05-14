@@ -39,24 +39,43 @@ export default function ChatScreen() {
     modelService.initialize();
   }, []);
 
-  const { messages, isGenerating, doSend } = useChat(
+  const { messages, isGenerating, isSpeaking, isLocked, doSend, resetMessages, cancelGeneration } = useChat(
     llmRef.current,
     ttsRef.current,
   );
 
+  const handleStop = useCallback(() => {
+    cancelGeneration();
+  }, [cancelGeneration]);
+
+  const handleReset = useCallback(() => {
+    resetMessages();
+    cancelGeneration();
+  }, [resetMessages, cancelGeneration]);
+
   const handleVoiceResult = useCallback(
     (text: string) => {
-      setInputText(text);
       doSend(text);
     },
     [doSend],
   );
 
-  const { isListening, voiceError, toggleMic, setupVoiceCallbacks } = useVoice(
+  const { isListening, voiceError, voiceAvailable, toggleMic, setupVoiceCallbacks } = useVoice(
     voiceRef.current,
     handleVoiceResult,
-    isGenerating,
+    false,
   );
+
+  const handleMicPress = useCallback(() => {
+    if (isLocked) {
+      cancelGeneration();
+      if (isListening) {
+        toggleMic();
+      }
+      return;
+    }
+    toggleMic();
+  }, [isLocked, isListening, toggleMic, cancelGeneration]);
 
   useEffect(() => {
     setupVoiceCallbacks();
@@ -67,11 +86,11 @@ export default function ChatScreen() {
   }, [setupVoiceCallbacks]);
 
   const handleSend = useCallback(() => {
-    if (inputText.trim() && !isGenerating) {
+    if (inputText.trim() && !isLocked) {
       doSend(inputText);
       setInputText('');
     }
-  }, [inputText, isGenerating, doSend]);
+  }, [inputText, isLocked, doSend]);
 
   const handleRetry = useCallback(() => {
     modelServiceRef.current?.initialize();
@@ -103,10 +122,14 @@ export default function ChatScreen() {
         inputText={inputText}
         onInputChange={setInputText}
         onSend={handleSend}
+        onStop={handleStop}
+        onReset={handleReset}
         isGenerating={isGenerating}
+        isSpeaking={isSpeaking}
         isListening={isListening}
         voiceError={voiceError}
-        onMicPress={toggleMic}
+        voiceAvailable={voiceAvailable}
+        onMicPress={handleMicPress}
       />
     </KeyboardAvoidingView>
   );

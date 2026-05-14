@@ -10,12 +10,18 @@ export function useVoice(
   const [voiceError, setVoiceError] = useState('');
   const isListeningRef = useRef(false);
 
+  const voiceAvailable = voiceService?.isAvailable ?? false;
+
   const toggleMic = useCallback(async () => {
     if (isGenerationLocked || !voiceService) return;
     setVoiceError('');
 
     if (isListeningRef.current) {
-      await voiceService.stop();
+      try {
+        await voiceService.stop();
+      } catch {
+        // silent
+      }
       isListeningRef.current = false;
       setIsListening(false);
     } else {
@@ -61,5 +67,12 @@ export function useVoice(
     });
   }, [voiceService, onResult]);
 
-  return { isListening, voiceError, toggleMic, setupVoiceCallbacks, setVoiceError };
+  return {
+    isListening,
+    voiceError,
+    voiceAvailable,
+    toggleMic,
+    setupVoiceCallbacks,
+    setVoiceError,
+  };
 }
