@@ -84,3 +84,6 @@ android/app/src/main/assets/ggml-hexagon/
 # Keystores with passwords
 release.keystore
 *.jks
+
+# Build outputs
+build/
